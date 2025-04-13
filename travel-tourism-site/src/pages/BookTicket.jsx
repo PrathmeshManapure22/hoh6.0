@@ -1,6 +1,8 @@
+// pages/BookTicket.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './BookTicket.css';
+import CryptoJS from 'crypto-js';
 import ReviewModal from '../components/ReviewModal';
 
 // Airport data for major Indian cities
@@ -38,12 +40,14 @@ const BookTicket = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewBooking, setReviewBooking] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [userBalance, setUserBalance] = useState(0);
   const navigate = useNavigate();
 
-  // Load bookings and reviews from localStorage on component mount
+  // Load bookings, reviews, and user balance from localStorage on component mount
   useEffect(() => {
     const savedBookings = localStorage.getItem('flightBookings');
     const savedReviews = localStorage.getItem('travelReviews');
+    const userData = JSON.parse(localStorage.getItem('travelgo_user')) || {};
     
     if (savedBookings) {
       setBookings(JSON.parse(savedBookings));
@@ -52,6 +56,8 @@ const BookTicket = () => {
     if (savedReviews) {
       setReviews(JSON.parse(savedReviews));
     }
+    
+    setUserBalance(userData.balance || 0);
   }, []);
 
   // Save bookings to localStorage whenever they change
@@ -111,6 +117,15 @@ const BookTicket = () => {
             duration: '2h 45m',
             price: Math.floor(Math.random() * 10000) + 6000,
             seatsAvailable: Math.floor(Math.random() * 15) + 3
+          },
+          {
+            id: 'fl789',
+            airline: 'SafeTrail Air',
+            departureTime: '18:00',
+            arrivalTime: '20:45',
+            duration: '2h 45m',
+            price: Math.floor(Math.random() * 8000) + 4000,
+            seatsAvailable: Math.floor(Math.random() * 10) + 2
           }
         ]
       };
@@ -132,48 +147,73 @@ const BookTicket = () => {
       return;
     }
 
+    const totalPrice = selectedFlight.price * formData.passengers;
+    
     // Get user data
     const userData = JSON.parse(localStorage.getItem('travelgo_user')) || {};
     
     // Check balance
-    if ((userData.balance || 0) < selectedFlight.price) {
-      setError(`Insufficient coins. You need ${selectedFlight.price} coins but only have ${userData.balance || 0}`);
+    if ((userData.balance || 0) < totalPrice) {
+      setError(`Insufficient coins. You need ${totalPrice} coins but only have ${userData.balance || 0}`);
       return;
     }
 
-    // Create transaction record
+    // Generate booking ID
+    const bookingId = CryptoJS.SHA256(`${Date.now()}-${selectedFlight.id}`).toString();
     const timestamp = new Date().toISOString();
-    const txId = `tx_${Date.now()}`;
+    
+    // Calculate 2% crypto reward
+    const rewardAmount = totalPrice * 0.02;
+    
+    // Update user balance and crypto balance
+    userData.balance = (userData.balance || 0) - totalPrice;
+    userData.cryptoBalance = (userData.cryptoBalance || 0) + rewardAmount;
+    localStorage.setItem('travelgo_user', JSON.stringify(userData));
+    setUserBalance(userData.balance);
+
+    // Create transaction record
     const bookingTx = {
-      id: txId,
+      id: bookingId,
       type: 'booking',
-      amount: selectedFlight.price,
+      amount: -totalPrice,
       date: timestamp,
       description: `${selectedFlight.airline} to ${formData.toCity}`,
       status: 'completed',
       rewardEligible: true
     };
 
-    // Update user balance
-    userData.balance = (userData.balance || 0) - selectedFlight.price;
-    localStorage.setItem('travelgo_user', JSON.stringify(userData));
-
     // Save transaction to history
     const txHistory = JSON.parse(localStorage.getItem('transaction_history')) || [];
     txHistory.unshift(bookingTx);
     localStorage.setItem('transaction_history', JSON.stringify(txHistory));
 
+    // Add crypto reward transaction
+    const cryptoRewards = JSON.parse(localStorage.getItem('crypto_rewards')) || [];
+    cryptoRewards.push({
+      id: `reward-${bookingId}`,
+      type: 'reward',
+      amount: rewardAmount,
+      date: timestamp,
+      description: `Crypto reward for booking ${selectedFlight.airline}`,
+      status: 'completed'
+    });
+    localStorage.setItem('crypto_rewards', JSON.stringify(cryptoRewards));
+
     // Create booking record
     const bookingDetails = {
       ...formData,
       ...selectedFlight,
-      bookingId: `FL-${Date.now().toString().slice(-6)}`,
-      status: 'Confirmed',
-      bookingDate: new Date().toLocaleString(),
+      id: bookingId,
+      bookingId: `FL-${bookingId.slice(0, 6)}`,
+      status: 'completed',
+      bookingDate: new Date().toISOString(),
+      userId: userData.id,
       passengerName: userData.username || 'Guest',
-      canReview: true,
-      hasReview: false,
-      transactionId: txId
+      reviewed: false,
+      transactionId: bookingId,
+      totalPrice,
+      rewardAmount,
+      destination: formData.toCity
     };
 
     setBookings([...bookings, bookingDetails]);
@@ -181,27 +221,43 @@ const BookTicket = () => {
     setFlights([]);
     setActiveTab('status');
     setError('');
-    alert(`Booking confirmed! Your PNR is ${bookingDetails.bookingId}\nYou can now leave a review for this booking.`);
+    
+    // Navigate to confirmation page with booking details
+    navigate('/booking-confirmation', { state: { bookingId: bookingDetails.bookingId } });
   };
 
   const handleReviewSubmit = (reviewData) => {
     // Add to reviews state
-    const updatedReviews = [...reviews, reviewData];
+    const newReview = {
+      ...reviewData,
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      userName: JSON.parse(localStorage.getItem('travelgo_user'))?.name || 'Anonymous'
+    };
+    
+    const updatedReviews = [...reviews, newReview];
     setReviews(updatedReviews);
     
     // Update booking to mark as reviewed
     const updatedBookings = bookings.map(booking => 
-      booking.bookingId === reviewData.bookingId 
-        ? { ...booking, canReview: false, hasReview: true }
+      booking.id === reviewData.bookingId 
+        ? { ...booking, reviewed: true }
         : booking
     );
     setBookings(updatedBookings);
     localStorage.setItem('flightBookings', JSON.stringify(updatedBookings));
+    
+    setShowReviewModal(false);
   };
 
   const openReviewModal = (booking) => {
     setReviewBooking(booking);
     setShowReviewModal(true);
+  };
+
+  const filterUserBookings = () => {
+    const userData = JSON.parse(localStorage.getItem('travelgo_user')) || {};
+    return bookings.filter(booking => booking.userId === userData.id);
   };
 
   return (
@@ -393,12 +449,45 @@ const BookTicket = () => {
               ))}
 
               {selectedFlight && (
-                <button 
-                  className="confirm-button"
-                  onClick={confirmBooking}
-                >
-                  Confirm Booking
-                </button>
+                <div className="booking-summary">
+                  <h3>Booking Summary</h3>
+                  
+                  <div className="summary-details">
+                    <div>
+                      <span>Flight:</span>
+                      <span>{selectedFlight.airline} {selectedFlight.flightNumber}</span>
+                    </div>
+                    <div>
+                      <span>Passengers:</span>
+                      <span>{formData.passengers}</span>
+                    </div>
+                    <div>
+                      <span>Class:</span>
+                      <span>{formData.cabinClass}</span>
+                    </div>
+                    <div>
+                      <span>Total Price:</span>
+                      <span>{selectedFlight.price * formData.passengers} coins</span>
+                    </div>
+                    <div className="reward-notice">
+                      <span>You'll earn:</span>
+                      <span className="reward-amount">
+                        {(selectedFlight.price * formData.passengers * 0.02).toFixed(6)} crypto
+                      </span>
+                      <span className="reward-percent">(2% reward)</span>
+                    </div>
+                  </div>
+                  
+                  <button 
+                    className="confirm-button"
+                    onClick={confirmBooking}
+                    disabled={userBalance < selectedFlight.price * formData.passengers}
+                  >
+                    {userBalance < selectedFlight.price * formData.passengers
+                      ? 'Insufficient Balance'
+                      : 'Confirm Booking'}
+                  </button>
+                </div>
               )}
             </div>
           )}
@@ -406,44 +495,34 @@ const BookTicket = () => {
       ) : (
         <div className="booking-status">
           <h2>My Flight Bookings</h2>
-          {bookings.length === 0 ? (
+          {filterUserBookings().length === 0 ? (
             <p className="no-bookings">No flight bookings yet. Book your first flight!</p>
           ) : (
             <div className="bookings-list">
-              {bookings.map((booking, index) => (
-                <div key={index} className="booking-card">
+              {filterUserBookings().map((booking) => (
+                <div key={booking.id} className="booking-card">
                   <div className="booking-header">
-                    <span className="booking-id">PNR: {booking.bookingId}</span>
-                    <span className={`status-badge ${booking.status.toLowerCase()}`}>
-                      {booking.status}
-                    </span>
+                    <h2>{booking.destination}</h2>
+                    <span className={`status ${booking.status.toLowerCase()}`}>{booking.status}</span>
                   </div>
                   <div className="booking-details">
-                    <p><strong>Route:</strong> {booking.fromCity} ({booking.fromAirport}) → {booking.toCity} ({booking.toAirport})</p>
-                    <p><strong>Flight:</strong> {booking.airline} {booking.flightNumber}</p>
-                    <p><strong>Departure:</strong> {booking.departureDate} at {booking.departureTime}</p>
-                    {booking.returnDate && <p><strong>Return:</strong> {booking.returnDate}</p>}
-                    <p><strong>Passengers:</strong> {booking.passengers} ({booking.cabinClass})</p>
-                    <p><strong>Price:</strong> {booking.price} coins</p>
-                    <p><strong>Booked on:</strong> {booking.bookingDate}</p>
-                    
-                    {booking.canReview && (
-                      <button 
-                        className="review-button"
-                        onClick={() => openReviewModal(booking)}
-                      >
-                        Leave Review
-                      </button>
-                    )}
-                    
-                    {booking.hasReview && (
-                      <div className="existing-review">
-                        <p><strong>Your Review:</strong> 
-                          {reviews.find(r => r.bookingId === booking.bookingId)?.rating} ★
-                        </p>
-                      </div>
-                    )}
+                    <p><strong>Date:</strong> {new Date(booking.departureDate).toLocaleDateString()}</p>
+                    <p><strong>Flight:</strong> {booking.flightNumber}</p>
+                    <p><strong>Price:</strong> {booking.totalPrice} coins</p>
+                    <p><strong>Passengers:</strong> {booking.passengers}</p>
+                    <p><strong>Crypto Reward:</strong> {booking.rewardAmount.toFixed(6)}</p>
                   </div>
+                  {!booking.reviewed && booking.status === 'completed' && (
+                    <button 
+                      onClick={() => openReviewModal(booking)}
+                      className="review-button"
+                    >
+                      Leave Review
+                    </button>
+                  )}
+                  {booking.reviewed && (
+                    <div className="reviewed-badge">Reviewed</div>
+                  )}
                 </div>
               ))}
             </div>

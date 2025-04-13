@@ -1,20 +1,23 @@
-import CryptoJS from 'crypto-js';
-
-// Generate a unique hash for each review
 export const generateReviewHash = (reviewData) => {
-  const timestamp = new Date().toISOString();
-  const dataString = `${reviewData.userId}-${reviewData.bookingId}-${reviewData.rating}-${reviewData.comment}-${timestamp}`;
-  return CryptoJS.SHA256(dataString).toString();
-};
-
-// Validate review hash to ensure immutability
-export const validateReviewHash = (review) => {
-  const expectedHash = generateReviewHash({
-    userId: review.userId,
-    bookingId: review.bookingId,
-    rating: review.rating,
-    comment: review.comment,
-    timestamp: review.timestamp
-  });
-  return review.hash === expectedHash;
-};
+    // Simple hash generation - in a real app, you might use a more secure method
+    const str = JSON.stringify(reviewData);
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash.toString();
+  };
+  
+  export const getReviewsByDestination = (destination) => {
+    const reviews = JSON.parse(localStorage.getItem('travelReviews')) || [];
+    return reviews.filter(review => review.destination === destination);
+  };
+  
+  export const getAverageRating = (destination) => {
+    const reviews = getReviewsByDestination(destination);
+    if (reviews.length === 0) return 0;
+    const sum = reviews.reduce((total, review) => total + review.rating, 0);
+    return (sum / reviews.length).toFixed(1);
+  };

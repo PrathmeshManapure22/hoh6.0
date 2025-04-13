@@ -1,31 +1,19 @@
-/* General Styles */
 .landing-page {
-    font-family: 'Roboto', sans-serif;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
   }
   
-  /* Hero Section with Background Image */
+  /* Hero Section Styles */
   .hero-section {
-    background: 
-      linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-      url('C:\Users\Dell\Downloads\hero background image.webp')
-      center/cover no-repeat fixed;
-    color: white;
-    text-align: center;
-    min-height: 70vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
     position: relative;
-    padding: 2rem;
-  }
-  
-  /* Add this to ensure proper rendering */
-  .landing-page {
-    overflow-x: hidden;
+    height: 80vh;
+    background: url('https://img.freepik.com/free-photo/beautiful-scenery-summit-mount-everest-covered-with-snow-white-clouds_181624-21317.jpg?t=st=1744526333~exp=1744529933~hmac=7e6760a264477e6820b2212f43fa3cc87731eb1ab0f895f8fa69b37589f3ecce&w=1380') no-repeat center center;
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
   }
   
   .hero-overlay {
@@ -34,65 +22,238 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url("https://img.freepik.com/free-photo/beautiful-shot-snowy-mountains-with-dark-blue-sky_181624-2640.jpg?t=st=1744458043~exp=1744461643~hmac=c39ba44d84f2994d6612571b6701b6cbf4ba3513e6f7ab01ee4270bff2a877f9&w=1380");
+    background-color: rgba(0, 0, 0, 0.5);
   }
   
   .hero-content {
     position: relative;
-    z-index: 2;
+    z-index: 1;
     max-width: 800px;
+    padding: 0 20px;
   }
   
-  .hero-section h1 {
-    font-size: 2.5rem;
-    margin-bottom: 1.5rem;
+  .hero-content h1 {
+    font-size: 3rem;
+    margin-bottom: 20px;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
   }
   
-  .hero-section p {
+  .hero-content p {
     font-size: 1.2rem;
-    margin-bottom: 2rem;
+    margin-bottom: 30px;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   }
   
   .explore-button {
-    background-color: #e76f51;
+    padding: 12px 30px;
+    background-color: #2a9d8f;
     color: white;
-    padding: 12px 24px;
     border: none;
     border-radius: 5px;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 1.1rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s;
   }
   
   .explore-button:hover {
-    background-color: #d65a3a;
+    background-color: #21867a;
     transform: translateY(-2px);
   }
   
-  /* Responsive Adjustments */
-  @media (max-width: 768px) {
-    .hero-section {
-      height: 60vh;
-    }
-    
-    .hero-section h1 {
-      font-size: 2rem;
-    }
-    
-    .hero-section p {
-      font-size: 1rem;
-    }
+  /* Section Container */
+  .section-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 20px;
   }
-  .reviews-section {
+  
+  /* Popular Destinations Section */
+  .popular-destinations {
     background-color: #f9f9f9;
-    padding: 3rem 0;
+  }
+  
+  .popular-destinations h2 {
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 2.2rem;
+    color: #2a9d8f;
+  }
+  
+  .destinations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 30px;
+  }
+  
+  .destination-card {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+  }
+  
+  .destination-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .destination-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+  
+  .destination-info {
+    padding: 20px;
+  }
+  
+  .destination-info h3 {
+    margin: 0 0 10px;
+    color: #333;
+    font-size: 1.4rem;
+  }
+  
+  .destination-description {
+    color: #666;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+  }
+  
+  .rating {
+    color: #ffc107;
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+  
+  .rating span {
+    color: #666;
+    font-size: 0.9rem;
+    margin-left: 5px;
+    font-weight: normal;
+  }
+  
+  /* Reviews Section */
+  .reviews-section {
+    background-color: #2a9d8f;
+    color: white;
   }
   
   .reviews-section h2 {
     text-align: center;
+    margin-bottom: 40px;
+    font-size: 2.2rem;
+  }
+  
+  .reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+  }
+  
+  .review-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 25px;
+    transition: all 0.3s ease;
+  }
+  
+  .review-card:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-5px);
+  }
+  
+  .review-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .rating {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: #ffc107;
+  }
+  
+  .review-text {
+    font-style: italic;
+    margin-bottom: 20px;
+    flex-grow: 1;
+  }
+  
+  .reviewer {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .review-destination {
+    font-size: 0.9rem;
+    opacity: 0.8;
+  }
+  
+  /* About Section */
+  .about {
+    background-color: #f9f9f9;
+    text-align: center;
+  }
+  
+  .about h2 {
     color: #2a9d8f;
-    margin-bottom: 2rem;
+    margin-bottom: 20px;
+    font-size: 2.2rem;
+  }
+  
+  .about p {
+    max-width: 800px;
+    margin: 0 auto;
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+  
+  /* Footer Section */
+  footer {
+    background-color: #333;
+    color: white;
+    padding: 30px 0;
+    text-align: center;
+  }
+  
+  .footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+  
+  .social-icons {
+    margin-top: 15px;
+  }
+  
+  .social-icons a {
+    color: white;
+    margin: 0 10px;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  
+  .social-icons a:hover {
+    color: #2a9d8f;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .hero-content h1 {
+      font-size: 2.2rem;
+    }
+    
+    .hero-content p {
+      font-size: 1rem;
+    }
+    
+    .destinations-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .reviews-grid {
+      grid-template-columns: 1fr;
+    }
   }

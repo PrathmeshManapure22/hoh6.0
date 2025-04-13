@@ -1,8 +1,9 @@
+// components/NavBar.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './NavBar.css';
 import Logo from '../assets/logo.jpg';
-import { FaCoins, FaWallet, FaChevronDown } from 'react-icons/fa';
+import { FaCoins, FaWallet, FaChevronDown, FaMapMarkedAlt } from 'react-icons/fa';
 
 function Navbar() {
   return (
@@ -15,6 +16,7 @@ function Navbar() {
         <ul className="navbar-links">
           <li><Link to="/">Home</Link></li>
           <li><Link to="/book-ticket">Book Ticket</Link></li>
+          <li><Link to="/itinerary-planner"><FaMapMarkedAlt /> Itinerary Planner</Link></li>
           <li className="wallet-dropdown">
             <button className="wallet-toggle">
               <FaWallet className="nav-icon" /> Wallets <FaChevronDown className="chevron" />

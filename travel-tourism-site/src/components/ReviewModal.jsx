@@ -15,16 +15,19 @@ const ReviewModal = ({ booking, onClose, onSubmit }) => {
       const reviewData = {
         userId: localStorage.getItem('travelgo_userId'),
         bookingId: booking.bookingId,
+        destination: booking.toCity,
         rating,
         comment,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        userName: localStorage.getItem('travelgo_username') || 'Anonymous'
       };
 
       // Generate immutable hash
       reviewData.hash = generateReviewHash(reviewData);
 
       await onSubmit(reviewData);
-      onClose();
+    } catch (error) {
+      console.error('Error submitting review:', error);
     } finally {
       setIsSubmitting(false);
     }

@@ -9,23 +9,37 @@ import AddCoins from './pages/AddCoins';
 import Login from './pages/Login';
 import SignUp from './pages/Signup';
 import CryptoWallet from './pages/CryptoWallet';
+import BookingConfirmation from './pages/BookingConfirmation';
+import ItineraryPlanner from './components/ItineraryPlanner';
+import MyBookings from './pages/MyBookings';
+import ReviewForm from './components/ReviewForm';
+import RewardSystem from './components/RewardSystem';
 
 function App() {
-  // Additional initialization that needs to run after component mounts
+  // Initialize all required localStorage items
   useEffect(() => {
-    // Ensure bookings storage exists
-    if (!localStorage.getItem('flightBookings')) {
-      localStorage.setItem('flightBookings', JSON.stringify([]));
-    }
+    const initializeLocalStorage = (key, defaultValue) => {
+      if (!localStorage.getItem(key)) {
+        localStorage.setItem(key, JSON.stringify(defaultValue));
+      }
+    };
 
-    // Ensure reviews storage exists
-    if (!localStorage.getItem('travelReviews')) {
-      localStorage.setItem('travelReviews', JSON.stringify([]));
-    }
-
-    // Ensure crypto storage exists
-    if (!localStorage.getItem('user_crypto')) {
-      localStorage.setItem('user_crypto', JSON.stringify({}));
+    initializeLocalStorage('flightBookings', []);
+    initializeLocalStorage('travelReviews', []);
+    initializeLocalStorage('user_crypto', {});
+    initializeLocalStorage('transaction_history', []);
+    initializeLocalStorage('crypto_rewards', []);
+    initializeLocalStorage('saved_itineraries', []);
+    initializeLocalStorage('user_wallet', { balance: 0, transactions: [] });
+    
+    // Initialize user data if not exists
+    if (!localStorage.getItem('travelgo_user')) {
+      localStorage.setItem('travelgo_user', JSON.stringify({
+        username: '',
+        email: '',
+        balance: 1000, // Starting balance for demo
+        cryptoBalance: 0
+      }));
     }
   }, []);
 
@@ -34,6 +48,7 @@ function App() {
       <div className="App">
         <Navbar />
         <Routes>
+          {/* Main Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/book-ticket" element={<BookTicket />} />
           <Route path="/wallet" element={<Wallet />} />
@@ -41,6 +56,22 @@ function App() {
           <Route path="/add-coins" element={<AddCoins />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+          
+          {/* Booking Management */}
+          <Route path="/my-bookings" element={<MyBookings />} />
+          
+          {/* Review System */}
+          <Route path="/review/:bookingId" element={<ReviewForm />} />
+          
+          {/* Itinerary Planning */}
+          <Route path="/itinerary-planner" element={<ItineraryPlanner />} />
+          
+          {/* Reward System */}
+          <Route path="/rewards" element={<RewardSystem />} />
+          
+          {/* Fallback Route */}
+          <Route path="*" element={<LandingPage />} />
         </Routes>
       </div>
     </Router>

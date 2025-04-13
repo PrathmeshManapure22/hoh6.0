@@ -9,9 +9,12 @@ function Wallet() {
   const [walletData, setWalletData] = useState({
     balance: 0,
     transactions: [],
+    cryptoBalance: 0,
+    cryptoTransactions: [],
     stats: {
       totalDeposits: 0,
-      totalSpent: 0
+      totalSpent: 0,
+      totalRewards: 0
     },
     isLoading: true,
     error: null
@@ -23,6 +26,7 @@ function Wallet() {
     try {
       const userData = JSON.parse(localStorage.getItem('travelgo_user')) || {};
       const transactions = JSON.parse(localStorage.getItem('transaction_history')) || [];
+      const cryptoTransactions = JSON.parse(localStorage.getItem('crypto_rewards')) || [];
       
       // Filter out crypto rewards from transactions
       const coinTransactions = transactions.filter(tx => tx.type !== 'reward');
@@ -33,12 +37,16 @@ function Wallet() {
           .reduce((sum, tx) => sum + tx.amount, 0),
         totalSpent: Math.abs(coinTransactions
           .filter(tx => tx.type === 'booking')
-          .reduce((sum, tx) => sum + tx.amount, 0))
+          .reduce((sum, tx) => sum + tx.amount, 0)),
+        totalRewards: cryptoTransactions
+          .reduce((sum, tx) => sum + tx.amount, 0)
       };
 
       setWalletData({
         balance: userData.balance || 0,
         transactions: coinTransactions,
+        cryptoBalance: userData.cryptoBalance || 0,
+        cryptoTransactions,
         stats,
         isLoading: false,
         error: null
@@ -161,6 +169,13 @@ function Wallet() {
                 <h3>Total Spent</h3>
               </div>
               <p className="negative">-{walletData.stats.totalSpent.toFixed(2)} coins</p>
+            </div>
+            <div className="stat-card">
+              <div className="stat-header">
+                <FaCoins className="stat-icon reward" />
+                <h3>Total Rewards</h3>
+              </div>
+              <p className="positive">+{walletData.stats.totalRewards.toFixed(6)} crypto</p>
             </div>
           </div>
         </div>

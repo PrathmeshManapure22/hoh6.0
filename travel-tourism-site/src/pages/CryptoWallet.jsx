@@ -1,134 +1,165 @@
 import React, { useState, useEffect } from 'react';
-import { FaCoins, FaHistory } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import './CryptoWallet.css';
+import { FaCoins, FaHistory, FaArrowRight } from 'react-icons/fa';
 
-const CryptoWallet = () => {
-  const [cryptoBalance, setCryptoBalance] = useState({});
-  const [transactions, setTransactions] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+function CryptoWallet() {
+  const [walletData, setWalletData] = useState({
+    balance: 0,
+    transactions: [],
+    isLoading: true,
+    error: null
+  });
+  const [activeTab, setActiveTab] = useState('balance');
+  const navigate = useNavigate();
 
-  const CRYPTO_CURRENCIES = {
-    "BTC": { name: "Bitcoin", icon: "₿" },
-    "ETH": { name: "Ethereum", icon: "Ξ" },
-    "BNB": { name: "Binance Coin", icon: "Ⓝ" },
-    "SOL": { name: "Solana", icon: "◎" },
-    "XRP": { name: "Ripple", icon: "✕" },
-    "ADA": { name: "Cardano", icon: "₳" },
-    "DOGE": { name: "Dogecoin", icon: "Ð" },
-    "DOT": { name: "Polkadot", icon: "●" }
+  const fetchWalletData = async () => {
+    try {
+      const userData = JSON.parse(localStorage.getItem('travelgo_user')) || {};
+      const transactions = JSON.parse(localStorage.getItem('crypto_rewards')) || [];
+      
+      setWalletData({
+        balance: userData.cryptoBalance || 0,
+        transactions,
+        isLoading: false,
+        error: null
+      });
+    } catch (err) {
+      console.error('Error fetching crypto wallet data:', err);
+      setWalletData(prev => ({
+        ...prev,
+        isLoading: false,
+        error: 'Failed to load crypto wallet data'
+      }));
+    }
   };
 
   useEffect(() => {
     fetchWalletData();
   }, []);
 
-  const fetchWalletData = async () => {
-    setIsLoading(true);
-    try {
-      const cryptoData = JSON.parse(localStorage.getItem('user_crypto')) || {};
-      const txData = JSON.parse(localStorage.getItem('transaction_history')) || [];
-      
-      setCryptoBalance(cryptoData);
-      setTransactions(txData.filter(tx => tx.type === 'reward'));
-    } catch (error) {
-      console.error('Error fetching wallet data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const getCryptoPrice = (crypto) => {
-    const prices = {
-      BTC: 60000,
-      ETH: 3000,
-      BNB: 500,
-      SOL: 150,
-      XRP: 0.5,
-      ADA: 0.45,
-      DOGE: 0.12,
-      DOT: 7
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchWalletData();
     };
-    return prices[crypto] || 1;
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
+  const handleRefresh = async () => {
+    setWalletData(prev => ({ ...prev, isLoading: true }));
+    await fetchWalletData();
   };
+
+  if (walletData.isLoading) {
+    return (
+      <div className="crypto-wallet-container">
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+          <p>Loading crypto wallet data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (walletData.error) {
+    return (
+      <div className="crypto-wallet-container">
+        <div className="error-message">
+          <p>{walletData.error}</p>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="crypto-wallet">
-      <header className="wallet-header">
-        <h1><FaCoins /> Crypto Wallet</h1>
-        <p>Manage your cryptocurrency rewards</p>
-      </header>
+    <div className="crypto-wallet-container">
+      <div className="wallet-header">
+        <h1>Crypto Rewards</h1>
+        <div className="wallet-tabs">
+          <button 
+            className={`tab-button ${activeTab === 'balance' ? 'active' : ''}`}
+            onClick={() => setActiveTab('balance')}
+          >
+            <FaCoins /> Balance
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
+            onClick={() => setActiveTab('history')}
+          >
+            <FaHistory /> Rewards History
+          </button>
+          <button 
+            className="refresh-button"
+            onClick={handleRefresh}
+            title="Refresh balance"
+          >
+            <FaArrowRight />
+          </button>
+        </div>
+      </div>
 
-      <section className="balance-section">
-        <h2>Your Crypto Assets</h2>
-        {isLoading ? (
-          <div className="loading">Loading balances...</div>
-        ) : (
-          <div className="crypto-grid">
-            {Object.entries(CRYPTO_CURRENCIES).map(([code, info]) => (
-              cryptoBalance[code] > 0 && (
-                <div key={code} className="crypto-card">
-                  <div className="crypto-icon">{info.icon}</div>
-                  <div className="crypto-info">
-                    <h3>{info.name}</h3>
-                    <p className="crypto-amount">
-                      {cryptoBalance[code].toFixed(8)} <span>{code}</span>
-                    </p>
-                    <p className="crypto-value">
-                      ${(cryptoBalance[code] * getCryptoPrice(code)).toFixed(2)} USD
-                    </p>
-                  </div>
-                </div>
-              )
-            ))}
-            {Object.values(cryptoBalance).every(bal => bal <= 0) && (
-              <div className="empty-wallet">
-                <p>No cryptocurrency holdings yet</p>
-                <p>Claim rewards from bookings to receive crypto!</p>
-              </div>
-            )}
+      {activeTab === 'balance' ? (
+        <div className="balance-section">
+          <div className="balance-card">
+            <div className="balance-header">
+              <h2>Crypto Rewards Balance</h2>
+              <FaCoins className="coin-icon" />
+            </div>
+            <div className="balance-amount">
+              <span className="amount">{walletData.balance.toFixed(6)}</span>
+              <span className="currency">SafeTrail Crypto</span>
+            </div>
+            <div className="wallet-info">
+              <p>Earn 2% crypto rewards on every booking!</p>
+            </div>
           </div>
-        )}
-      </section>
-
-      <section className="transaction-section">
-        <h2><FaHistory /> Transaction History</h2>
-        {isLoading ? (
-          <div className="loading">Loading transactions...</div>
-        ) : (
-          <div className="transaction-list">
-            {transactions.length > 0 ? (
-              transactions.map(tx => (
-                <div key={tx.id} className="transaction-item">
-                  <div className="tx-icon">↑</div>
-                  <div className="tx-details">
-                    <div className="tx-header">
-                      <span className="tx-amount">+{tx.cryptoAmount.toFixed(8)} {tx.crypto}</span>
-                      <span className="tx-date">{formatDate(tx.date)}</span>
+        </div>
+      ) : (
+        <div className="history-section">
+          <h2>Rewards History</h2>
+          {walletData.transactions.length === 0 ? (
+            <div className="no-transactions">
+              <p>No rewards yet</p>
+              <p>Book flights to earn crypto rewards!</p>
+            </div>
+          ) : (
+            <div className="transactions-list">
+              {walletData.transactions.map((tx) => (
+                <div key={tx.id} className="transaction-item reward">
+                  <div className="transaction-icon">
+                    <FaArrowRight className="incoming" />
+                  </div>
+                  <div className="transaction-details">
+                    <h3>{tx.description}</h3>
+                    <div className="transaction-meta">
+                      <span className="transaction-date">
+                        {new Date(tx.date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                      <span className="transaction-status completed">
+                        {tx.status}
+                      </span>
                     </div>
-                    <p className="tx-description">{tx.description}</p>
+                  </div>
+                  <div className="transaction-amount reward">
+                    +{tx.amount.toFixed(6)} crypto
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="empty-transactions">
-                <p>No crypto transactions yet</p>
-              </div>
-            )}
-          </div>
-        )}
-      </section>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
-};
+}
 
 export default CryptoWallet;
